@@ -1,0 +1,15 @@
+TERM=xterm-256color
+SSH_AUTH_SOCK=/private/tmp/com.apple.launchd.hX2wvnLigo/Listeners
+__CF_USER_TEXT_ENCODING=0x1F5:0x0:0x0
+PATH=/Users/rizwanmushtaq/.local/share/mamba/envs/torch_env/bin:/Users/rizwanmushtaq/micromamba/bin:/Users/rizwanmushtaq/micromamba:/usr/local/Cellar/postgresql@15/15.13/bin:/Users/rizwanmushtaq/.cargo/bin:/Users/rizwanmushtaq/.local/share/solana/install/active_release/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/opt/anaconda3/condabin:/Library/Frameworks/Python.framework/Versions/3.11/bin:/Users/rizwanmushtaq/.rbenv/shims:/Applications/XAMPP/xamppfiles/bin:/usr/local/opt/openssl@1.1/bin:/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:~/.dotnet/tools:/Library/Apple/usr/bin:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Users/rizwanmushtaq/.vscode/extensions/ms-python.debugpy-2025.8.0-darwin-x64/bundled/scripts/noConfigScripts:/Users/rizwanmushtaq/Library/Application Support/Code/User/globalStorage/github.copilot-chat/debugCommand:/Users/rizwanmushtaq/Library/Android/sdk/tools:/Users/rizwanmushtaq/Library/Android/sdk/tools/bin:/Users/rizwanmushtaq/Library/Android/sdk/platform-tools:/Users/rizwanmushtaq/Library/Android/sdk/emulator:/Users/rizwanmushtaq/.rvm/bin
+LANG=en_US.UTF-8
+HOME=/Users/rizwanmushtaq
+COLORTERM=truecolor
+MAIL=/var/mail/root
+LOGNAME=root
+USER=root
+SHELL=/bin/sh
+SUDO_COMMAND=/usr/bin/env
+SUDO_USER=rizwanmushtaq
+SUDO_UID=501
+SUDO_GID=20

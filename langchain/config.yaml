@@ -1,0 +1,5 @@
+model_list:
+  - model_name: gemma:2b
+    litellm_params:
+      model: 'ollama_chat/gemma:2b'   # ← Use this instead of 'ollama/gemma:2b'
+      api_base: 'http://127.0.0.1:11434'

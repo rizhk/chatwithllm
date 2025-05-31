@@ -1,0 +1,17 @@
+# POST http://127.0.0.1:11434/api/chat
+# Content-Type: application/json
+
+# {
+#   "model": "gemma:2b",
+#   "messages": [{"role": "user", "content": "Hello"}]
+# }
+
+POST http://localhost:38834/v1/chat/completions
+Content-Type: application/json
+
+{
+  "model": "ollama_chat/gemma:2b",
+  "messages": [
+    {"role": "user", "content": "Hello"}
+  ]
+}

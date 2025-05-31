@@ -5,6 +5,87 @@ import {
   smoothStream,
   streamText,
 } from 'ai';
+
+
+type JSONValue =
+  | null
+  | string
+  | number
+  | boolean
+  | { [key: string]: JSONValue }
+  | Array<JSONValue>;
+
+interface DataStreamPart<CODE extends string, NAME extends string, TYPE> {
+  code: CODE;
+  name: NAME;
+  parse: (value: JSONValue) => {
+    type: NAME;
+    value: TYPE;
+  };
+}
+
+
+interface LanguageModelV1Source {
+  readonly toolName?: string;
+}
+
+type ToolCall<NAME extends string, ARGS> = {
+  toolName: NAME;
+  args: ARGS;
+  argsText: string;
+  state: 'partial-call' | 'call';
+};
+
+type ToolResult<NAME extends string, ARGS, RESPONSE> = {
+  toolName: NAME;
+  args: ARGS;
+  response: RESPONSE;
+};
+
+declare const dataStreamParts: readonly [
+  DataStreamPart<"0", "text", string>,
+  DataStreamPart<"2", "data", JSONValue[]>,
+  DataStreamPart<"3", "error", string>,
+  DataStreamPart<"8", "message_annotations", JSONValue[]>,
+  DataStreamPart<"9", "tool_call", ToolCall<string, any>>,
+  DataStreamPart<"a", "tool_result", Omit<ToolResult<string, any, any>, "args" | "toolName">>,
+  DataStreamPart<"b", "tool_call_streaming_start", { toolCallId: string; toolName: string }>,
+  DataStreamPart<"c", "tool_call_delta", { toolCallId: string; argsTextDelta: string }>,
+  DataStreamPart<"d", "finish_message", { finishReason: string; usage?: { promptTokens: number; completionTokens: number } }>,
+  DataStreamPart<"e", "finish_step", { isContinued: boolean; finishReason: string; usage?: { promptTokens: number; completionTokens: number } }>,
+  DataStreamPart<"f", "start_step", { messageId: string }>,
+  DataStreamPart<"g", "reasoning", string>,
+  DataStreamPart<"h", "source", LanguageModelV1Source>,
+  DataStreamPart<"i", "redacted_reasoning", { data: string }>,
+  DataStreamPart<"j", "reasoning_signature", { signature: string }>,
+  DataStreamPart<"k", "file", { data: string; mimeType: string }>
+];
+
+type DataStreamParts = (typeof dataStreamParts)[number];
+
+
+declare const DataStreamStringPrefixes: {
+  readonly text: "0";
+  readonly data: "2";
+  readonly error: "3";
+  readonly message_annotations: "8";
+  readonly tool_call: "9";
+  readonly tool_result: "a";
+  readonly tool_call_streaming_start: "b";
+  readonly tool_call_delta: "c";
+  readonly finish_message: "d";
+  readonly finish_step: "e";
+  readonly start_step: "f";
+  readonly reasoning: "g";
+  readonly source: "h";
+  readonly redacted_reasoning: "i";
+  readonly reasoning_signature: "j";
+  readonly file: "k";
+};
+
+type DataStreamString = `${(typeof DataStreamStringPrefixes)[keyof typeof DataStreamStringPrefixes]}:${string}`;
+
+
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
 import {
@@ -41,6 +122,17 @@ export const maxDuration = 60;
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
+function createTextChunk(text: string): DataStreamString {
+  const isAlreadyDataStreamString = /^[\da-k]:/.test(text);
+  
+  if (isAlreadyDataStreamString) {
+    return text as DataStreamString;
+  }
+
+  return `0:${text}` as DataStreamString;
+}
+
+
 function getStreamContext() {
   if (!globalStreamContext) {
     try {
@@ -67,6 +159,8 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
+
+
   } catch (_) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
@@ -75,11 +169,13 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
-    const session = await auth();
 
-    if (!session?.user) {
-      return new ChatSDKError('unauthorized:chat').toResponse();
-    }
+      
+      const session = await auth();
+      
+      if (!session?.user) {
+        return new ChatSDKError('unauthorized:chat').toResponse();
+      }
 
     const userType: UserType = session.user.type;
 
@@ -88,16 +184,22 @@ export async function POST(request: Request) {
       differenceInHours: 24,
     });
 
+    
+
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
     const chat = await getChatById({ id });
-
+    console.log(' > POST request body: digital 0', requestBody);
     if (!chat) {
+
       const title = await generateTitleFromUserMessage({
         message,
       });
+      
+      console.log(' > inside chat >', chat);
+      // console.log(' > Chat request body: title >', title);
 
       await saveChat({
         id,
@@ -111,6 +213,10 @@ export async function POST(request: Request) {
       }
     }
 
+        console.log(' > POST request body: digital 00', requestBody);
+
+
+
     const previousMessages = await getMessagesByChatId({ id });
 
     const messages = appendClientMessage({
@@ -118,6 +224,9 @@ export async function POST(request: Request) {
       messages: previousMessages,
       message,
     });
+
+    console.log(' > POST request body: digital 1', requestBody);
+
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -141,88 +250,91 @@ export async function POST(request: Request) {
       ],
     });
 
+        console.log(' > POST request body: digital 2', requestBody);
+
+
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
     const stream = createDataStream({
-      execute: (dataStream) => {
-        const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
-          messages,
-          maxSteps: 5,
-          experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning'
-              ? []
-              : [
-                  'getWeather',
-                  'createDocument',
-                  'updateDocument',
-                  'requestSuggestions',
-                ],
-          experimental_transform: smoothStream({ chunking: 'word' }),
-          experimental_generateMessageId: generateUUID,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
+      async execute(dataStream) {
+        try {
+          // 🔧 1. Simulate a tool call (if needed)
+          dataStream.writeData({
+            type: 'tool_call',
+            toolName: 'getWeather',
+            input: { location: 'San Francisco' },
+          });
+
+          // 📦 2. Build prompt from messages
+          const prompt = messages
+            .filter((msg) => msg.role === 'user')
+            .map((msg) => msg.content)
+            .join('\n');
+
+          // 🚀 3. Fetch from your FastAPI endpoint
+          const response = await fetch('http://localhost:8000/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              prompt,
+              model: selectedChatModel,
             }),
-          },
-          onFinish: async ({ response }) => {
-            if (session.user?.id) {
-              try {
-                const assistantId = getTrailingMessageId({
-                  messages: response.messages.filter(
-                    (message) => message.role === 'assistant',
-                  ),
-                });
+          });
 
-                if (!assistantId) {
-                  throw new Error('No assistant message found!');
-                }
+          if (!response.ok || !response.body) {
+            throw new Error('Failed to fetch stream');
+          }
 
-                const [, assistantMessage] = appendResponseMessages({
-                  messages: [message],
-                  responseMessages: response.messages,
-                });
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
 
-                await saveMessages({
-                  messages: [
-                    {
-                      id: assistantId,
-                      chatId: id,
-                      role: assistantMessage.role,
-                      parts: assistantMessage.parts,
-                      attachments:
-                        assistantMessage.experimental_attachments ?? [],
-                      createdAt: new Date(),
-                    },
-                  ],
-                });
-              } catch (_) {
-                console.error('Failed to save chat');
-              }
-            }
-          },
-          experimental_telemetry: {
-            isEnabled: isProductionEnvironment,
-            functionId: 'stream-text',
-          },
-        });
+          // 📤 4. Stream tokens back to client/UI
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-        result.consumeStream();
+            const chunk = decoder.decode(value, { stream: true });
+            const chunkWithType = createTextChunk(chunk); // ✅ Safe and typed
+            dataStream.write(chunkWithType  as any);
 
-        result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
+          }
+
+          // 🏁 5. Send onFinish-like event via annotation
+          const assistantId = generateUUID(); // or use getTrailingMessageId
+          dataStream.writeMessageAnnotation({
+            type: 'message_end',
+            id: assistantId,
+            role: 'assistant',
+            createdAt: new Date().toISOString(),
+          });
+
+          await saveMessages({
+            messages: [
+              {
+                id: assistantId,
+                chatId: id,
+                role: 'user',
+                parts: 'parts' in message ? message.parts : [],
+                attachments: [],
+                createdAt: new Date(),
+              },
+            ],
+          });
+
+        } catch (error) {
+          console.error('Stream error:', error);
+          // dataStream.write(formatDataStreamPart('error', onError(error)));
+        }
       },
       onError: () => {
         return 'Oops, an error occurred!';
       },
     });
+
+            console.log(' > POST request body: digital 3', requestBody);
 
     const streamContext = getStreamContext();
 
@@ -239,6 +351,34 @@ export async function POST(request: Request) {
     }
   }
 }
+
+
+async function* fetchCustomStream(prompt: string, selectedChatModel: string, ): AsyncGenerator<string> {
+  const response = await fetch('http://localhost:3000/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      prompt,
+      model: selectedChatModel,
+      // systemPrompt: systemPrompt(...),
+    }),
+  });
+
+  if (!response.ok) throw new Error('Stream failed');
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let done = false;
+
+  while (!done) {
+    const { value, done: streamDone } = await reader!.read();
+    done = streamDone;
+    if (value) {
+      yield decoder.decode(value, { stream: true });
+    }
+  }
+}
+
 
 export async function GET(request: Request) {
   const streamContext = getStreamContext();
