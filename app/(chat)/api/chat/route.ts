@@ -6,6 +6,7 @@ import {
   streamText,
 } from 'ai';
 
+// export const runtime = 'edge';
 
 type JSONValue =
   | null
@@ -187,9 +188,7 @@ export async function POST(request: Request) {
     }
 
     const chat = await getChatById({ id });
-    console.log(' > POST request body: digital 0', chat);
     if (!chat) {
-      console.log(' > POST request body: digital dddasdasdada', chat);
       // const title = await generateTitleFromUserMessage({
       //   message,
       // });
@@ -286,7 +285,6 @@ export async function POST(request: Request) {
 
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
-
         function read() {
           reader.read().then(({ done, value }) => {
             if (done) {
@@ -301,7 +299,7 @@ export async function POST(request: Request) {
             const chunk = decoder.decode(value, { stream: true });
 
             // Split into small parts (optional)
-            const words = chunk.split(' ');
+            const words = chunk.split(/(\s+|\n+)/);
 
             for (let i = 0; i < words.length; i++) {
               const word = words[i];
@@ -318,7 +316,12 @@ export async function POST(request: Request) {
       },
     });
 
-    return new Response(stream);
+return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+    },
+  });
 
   } catch (error) {
     if (error instanceof ChatSDKError) {
