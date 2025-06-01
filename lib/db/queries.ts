@@ -46,10 +46,10 @@ export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get user by email',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);
+
   }
 }
 
@@ -59,7 +59,9 @@ export async function createUser(email: string, password: string) {
   try {
     return await db.insert(user).values({ email, password: hashedPassword });
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to create user');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);
   }
 }
 
@@ -73,11 +75,9 @@ export async function createGuestUser() {
       email: user.email,
     });
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to create guest user',
-    );
-  }
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);  }
 }
 
 export async function saveChat({
@@ -100,7 +100,9 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to save chat');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);  
   }
 }
 
@@ -116,10 +118,9 @@ export async function deleteChatById({ id }: { id: string }) {
       .returning();
     return chatsDeleted;
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to delete chat by id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -192,10 +193,9 @@ export async function getChatsByUserId({
       hasMore,
     };
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get chats by user id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -204,7 +204,9 @@ export async function getChatById({ id }: { id: string }) {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -216,7 +218,9 @@ export async function saveMessages({
   try {
     return await db.insert(message).values(messages);
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to save messages');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -228,10 +232,9 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get messages by chat id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -262,7 +265,9 @@ export async function voteMessage({
       isUpvoted: type === 'up',
     });
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to vote message');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -270,10 +275,9 @@ export async function getVotesByChatId({ id }: { id: string }) {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get votes by chat id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -303,7 +307,9 @@ export async function saveDocument({
       })
       .returning();
   } catch (error) {
-    throw new ChatSDKError('bad_request:database', 'Failed to save document');
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -317,10 +323,9 @@ export async function getDocumentsById({ id }: { id: string }) {
 
     return documents;
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get documents by id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -334,10 +339,9 @@ export async function getDocumentById({ id }: { id: string }) {
 
     return selectedDocument;
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get document by id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -363,10 +367,9 @@ export async function deleteDocumentsByIdAfterTimestamp({
       .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
       .returning();
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to delete documents by id after timestamp',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -378,10 +381,9 @@ export async function saveSuggestions({
   try {
     return await db.insert(suggestion).values(suggestions);
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to save suggestions',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -396,10 +398,9 @@ export async function getSuggestionsByDocumentId({
       .from(suggestion)
       .where(and(eq(suggestion.documentId, documentId)));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get suggestions by document id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -407,10 +408,9 @@ export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get message by id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -445,10 +445,9 @@ export async function deleteMessagesByChatIdAfterTimestamp({
         );
     }
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to delete messages by chat id after timestamp',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -462,10 +461,9 @@ export async function updateChatVisiblityById({
   try {
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to update chat visibility by id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -493,10 +491,9 @@ export async function getMessageCountByUserId({
 
     return stats?.count ?? 0;
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get message count by user id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -512,10 +509,9 @@ export async function createStreamId({
       .insert(stream)
       .values({ id: streamId, chatId, createdAt: new Date() });
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to create stream id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }
 
@@ -530,9 +526,8 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
 
     return streamIds.map(({ id }) => id);
   } catch (error) {
-    throw new ChatSDKError(
-      'bad_request:database',
-      'Failed to get stream ids by chat id',
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    const stackLine = new Error().stack?.split('\n')[2]?.trim() || 'unknown location';
+    throw new ChatSDKError('bad_request:database', `${stackLine}: ${message}`);    
   }
 }

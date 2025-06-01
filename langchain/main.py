@@ -59,9 +59,10 @@ async def get_prompt_response(request: Request):
 async def lang_chat(request: Request):
     data = await request.json()
     prompt = data.get("prompt", "")
+    print(f"Received prompt: {prompt}")
 
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required")
 
-    return StreamingResponse(chat_stream(prompt), media_type="text/plain")
+    return StreamingResponse(chat_stream(prompt), media_type="text/event-stream")
 

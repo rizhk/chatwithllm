@@ -159,18 +159,15 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-
-
   } catch (_) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
+  console.log(' > POST /chat', requestBody);
 
   try {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
-
-      
       const session = await auth();
       
       if (!session?.user) {
@@ -184,22 +181,19 @@ export async function POST(request: Request) {
       differenceInHours: 24,
     });
 
-    
-
+  
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
     const chat = await getChatById({ id });
-    console.log(' > POST request body: digital 0', requestBody);
+    console.log(' > POST request body: digital 0', chat);
     if (!chat) {
-
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-      
-      console.log(' > inside chat >', chat);
-      // console.log(' > Chat request body: title >', title);
+      console.log(' > POST request body: digital dddasdasdada', chat);
+      // const title = await generateTitleFromUserMessage({
+      //   message,
+      // });
+      const title = 'Title from user message'; // Placeholder for title generation
 
       await saveChat({
         id,
@@ -213,10 +207,6 @@ export async function POST(request: Request) {
       }
     }
 
-        console.log(' > POST request body: digital 00', requestBody);
-
-
-
     const previousMessages = await getMessagesByChatId({ id });
 
     const messages = appendClientMessage({
@@ -224,9 +214,6 @@ export async function POST(request: Request) {
       messages: previousMessages,
       message,
     });
-
-    console.log(' > POST request body: digital 1', requestBody);
-
 
     const { longitude, latitude, city, country } = geolocation(request);
 
@@ -250,106 +237,155 @@ export async function POST(request: Request) {
       ],
     });
 
-        console.log(' > POST request body: digital 2', requestBody);
-
 
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
+    const prompt = messages
+      .filter((msg) => msg.role === 'user')
+      .map((msg) => msg.content)
+      .join('\n');
 
-    const stream = createDataStream({
-      async execute(dataStream) {
-        try {
-          // 🔧 1. Simulate a tool call (if needed)
-          dataStream.writeData({
-            type: 'tool_call',
-            toolName: 'getWeather',
-            input: { location: 'San Francisco' },
-          });
-
-          // 📦 2. Build prompt from messages
-          const prompt = messages
-            .filter((msg) => msg.role === 'user')
-            .map((msg) => msg.content)
-            .join('\n');
-
-          // 🚀 3. Fetch from your FastAPI endpoint
-          const response = await fetch('http://localhost:8000/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              prompt,
-              model: selectedChatModel,
-            }),
-          });
-
-          if (!response.ok || !response.body) {
-            throw new Error('Failed to fetch stream');
-          }
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-
-          // 📤 4. Stream tokens back to client/UI
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const chunkWithType = createTextChunk(chunk); // ✅ Safe and typed
-            dataStream.write(chunkWithType  as any);
-
-          }
-
-          // 🏁 5. Send onFinish-like event via annotation
-          const assistantId = generateUUID(); // or use getTrailingMessageId
-          dataStream.writeMessageAnnotation({
-            type: 'message_end',
-            id: assistantId,
-            role: 'assistant',
-            createdAt: new Date().toISOString(),
-          });
-
-          await saveMessages({
-            messages: [
-              {
-                id: assistantId,
-                chatId: id,
-                role: 'user',
-                parts: 'parts' in message ? message.parts : [],
-                attachments: [],
-                createdAt: new Date(),
-              },
-            ],
-          });
-
-        } catch (error) {
-          console.error('Stream error:', error);
-          // dataStream.write(formatDataStreamPart('error', onError(error)));
-        }
+    // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama 
+    const response = await fetch('http://localhost:8000/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-      onError: () => {
-        return 'Oops, an error occurred!';
+      body: JSON.stringify({
+        prompt,
+        model: selectedChatModel,
+      }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error('Failed to fetch stream');
+    }
+    const assistantId = generateUUID();
+    await saveMessages({
+        messages: [
+          {
+            id: assistantId,
+            chatId: id,
+            role: 'user',
+            parts: 'parts' in message ? message.parts : [],
+            attachments: [],
+            createdAt: new Date(),
+          },
+        ],
+      });
+    
+
+
+    const stream = new ReadableStream({
+      start(controller) {
+        const encoder = new TextEncoder();
+        const assistantId = generateUUID();
+
+        // Start message
+        controller.enqueue(encoder.encode(`f:{"messageId":"${assistantId}"}\n`));
+
+        // Simulate streamed chunks
+        const fakeChunks = [
+          'The ',
+          'responsibilities ',
+          'of ',
+          'the ',
+          'President ',
+          'of ',
+          'the ',
+          'USA ',
+          'include ',
+          'being ',
+          'the ',
+          'head ',
+          'of ',
+          'state ',
+          'and ',
+          'government, ',
+          'commander-in-chief ',
+          'of ',
+          'the ',
+          'armed ',
+          'forces, ',
+          'chief ',
+          'diplomat, ',
+          'and ',
+          'chief ',
+          'legislator. ',
+          'They ',
+          'are ',
+          'responsible ',
+          'for ',
+          'executing ',
+          'and ',
+          'enforcing ',
+          'federal ',
+          'laws, ',
+          'appointing ',
+          'federal ',
+          'officials, ',
+          'including ',
+          'judges ',
+          'and ',
+          'ambassadors, ',
+          'and ',
+          'can ',
+          'veto ',
+          'legislation ',
+          'passed ',
+          'by ',
+          'Congress. ',
+          'Would ',
+          'you ',
+          'like ',
+          'me ',
+          'to ',
+          'create ',
+          'a ',
+          'document ',
+          'summarizing ',
+          'these ',
+          'responsibilities?',
+        ];
+
+        let index = 0;
+        const interval = setInterval(() => {
+          const chunk = fakeChunks[index];
+          if (chunk === undefined) {
+            clearInterval(interval);
+            // Finish message
+            controller.enqueue(
+              encoder.encode(
+                `e:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73},"isContinued":false}\n`
+              )
+            );
+            controller.enqueue(
+              encoder.encode(
+                `d:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73}}\n`
+              )
+            );
+            controller.close();
+            return;
+          }
+
+          controller.enqueue(encoder.encode(`0:"${chunk}"\n`));
+          index++;
+        }, 50); // simulate delay
       },
     });
 
-            console.log(' > POST request body: digital 3', requestBody);
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    });
 
-    const streamContext = getStreamContext();
-
-    if (streamContext) {
-      return new Response(
-        await streamContext.resumableStream(streamId, () => stream),
-      );
-    } else {
-      return new Response(stream);
-    }
   } catch (error) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
   }
+
 }
 
 

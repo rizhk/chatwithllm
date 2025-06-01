@@ -28,7 +28,7 @@ import litellm
 from langchain_openai import ChatOpenAI
 
 # Point to your local LiteLLM proxy
-def chat_stream(message: str):
+async def chat_stream(message: str):
     chat = ChatOpenAI(
         openai_api_base="http://localhost:4000",  # LiteLLM proxy URL
         model="gemma:2b",
@@ -37,4 +37,5 @@ def chat_stream(message: str):
 
     # Stream response token by token
     for chunk in chat.stream(message):
+        print(chunk.content)
         yield chunk.content  # Yield only the content string

@@ -1,6 +1,7 @@
 # mkdir -p ~/mamba-postgres/data
 # initdb -D ~/mamba-postgres/data
 micromamba activate torch_env
+fastapi dev main.py
 pg_ctl -D ~/mamba-postgres/data -l ~/mamba-postgres/logfile start
 ollama run --model gemma:2b --port 11434 --host
 
