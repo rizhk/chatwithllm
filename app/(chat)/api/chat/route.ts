@@ -281,104 +281,44 @@ export async function POST(request: Request) {
         const encoder = new TextEncoder();
         const assistantId = generateUUID();
 
-        // Start message
+        // f: Start message
         controller.enqueue(encoder.encode(`f:{"messageId":"${assistantId}"}\n`));
 
-        // Simulate streamed chunks
-        const fakeChunks = [
-          'The ',
-          'responsibilities ',
-          'of ',
-          'the ',
-          'President ',
-          'of ',
-          'the ',
-          'USA ',
-          'include ',
-          'being ',
-          'the ',
-          'head ',
-          'of ',
-          'state ',
-          'and ',
-          'government, ',
-          'commander-in-chief ',
-          'of ',
-          'the ',
-          'armed ',
-          'forces, ',
-          'chief ',
-          'diplomat, ',
-          'and ',
-          'chief ',
-          'legislator. ',
-          'They ',
-          'are ',
-          'responsible ',
-          'for ',
-          'executing ',
-          'and ',
-          'enforcing ',
-          'federal ',
-          'laws, ',
-          'appointing ',
-          'federal ',
-          'officials, ',
-          'including ',
-          'judges ',
-          'and ',
-          'ambassadors, ',
-          'and ',
-          'can ',
-          'veto ',
-          'legislation ',
-          'passed ',
-          'by ',
-          'Congress. ',
-          'Would ',
-          'you ',
-          'like ',
-          'me ',
-          'to ',
-          'create ',
-          'a ',
-          'document ',
-          'summarizing ',
-          'these ',
-          'responsibilities?',
-        ];
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
 
-        let index = 0;
-        const interval = setInterval(() => {
-          const chunk = fakeChunks[index];
-          if (chunk === undefined) {
-            clearInterval(interval);
-            // Finish message
-            controller.enqueue(
-              encoder.encode(
-                `e:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73},"isContinued":false}\n`
-              )
-            );
-            controller.enqueue(
-              encoder.encode(
-                `d:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73}}\n`
-              )
-            );
-            controller.close();
-            return;
-          }
+        function read() {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              // e: End step
+              controller.enqueue(encoder.encode(`e:{"finishReason":"stop","isContinued":false}\n`));
+              // d: Finish message
+              controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73}}\n`));
+              controller.close();
+              return;
+            }
 
-          controller.enqueue(encoder.encode(`0:"${chunk}"\n`));
-          index++;
-        }, 50); // simulate delay
+            const chunk = decoder.decode(value, { stream: true });
+
+            // Split into small parts (optional)
+            const words = chunk.split(' ');
+
+            for (let i = 0; i < words.length; i++) {
+              const word = words[i];
+              if (word.trim()) {
+                controller.enqueue(encoder.encode(`0:"${word} "\n`));
+              }
+            }
+
+            read();
+          });
+        }
+
+        read();
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-      },
-    });
+    return new Response(stream);
 
   } catch (error) {
     if (error instanceof ChatSDKError) {
