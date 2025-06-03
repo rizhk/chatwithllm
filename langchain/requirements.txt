@@ -172,8 +172,8 @@ numpy==1.22.0
 oauthlib==3.2.2
 ollama==0.4.8
 openai
-opencv-python==4.10.0
-opencv-python-headless==4.10.0
+opencv-python==4.5.5.64
+opencv-python-headless==4.5.5.64
 orjson==3.10.18
 packaging==23.2
 pandas==1.4.4
