@@ -12,6 +12,10 @@
 # print(response.text)
 
 import litellm
+from dotenv import load_dotenv
+import os
+
+load_dotenv() # Load environment variables from .env file
 
 # Tell litellm where to find the ollama server
 # litellm.api_base = "http://localhost:11434"
@@ -29,9 +33,12 @@ from langchain_openai import ChatOpenAI
 
 # Point to your local LiteLLM proxy
 async def chat_stream(message: str):
+    LITELLM_LISTENING_PORT = os.getenv("LITELLM_LISTENING_PORT", "4000")
+    MODEL_NAME = os.getenv("MODEL_NAME", "llama-cpp")
+    
     chat = ChatOpenAI(
-        openai_api_base="http://localhost:4000",  # LiteLLM proxy URL
-        model="gemma:2b",
+        openai_api_base= f"http://localhost:{LITELLM_LISTENING_PORT}",  # LiteLLM proxy URL
+        model=MODEL_NAME,
         openai_api_key="EMPTY"
     )
 

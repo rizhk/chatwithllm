@@ -18,7 +18,7 @@ chmod +x ./llama.cpp/build/bin/llama-cli
 ./llama.cpp/build/bin/llama-cli -m ./llama.cpp/models/tinyllama.gguf -cnv -b 512 --port 8000 &
 
 # Start LiteLLM proxy
-litellm --model llama-cpp=custom_openai/api_base=http://localhost:8000 &
+litellm --port 4000 --model llama-cpp=custom_openai/api_base=http://localhost:8000 &
 
 # Start FastAPI app
 uvicorn main:app --host 0.0.0.0 --port 10000 --reload
