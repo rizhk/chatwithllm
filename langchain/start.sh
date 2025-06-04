@@ -13,11 +13,11 @@
 # Start llama.cpp model server
 #!/bin/sh
 mkdir -p ./llama.cpp/models
-curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/model/tinyllama.gguf
+curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
 # Start llama.cpp model server
-chmod +x ./llama.cpp/build/bin/llama-cli
-./llama.cpp/build/bin/llama-cli -m ./llama.cpp/models/tinyllama.gguf -cnv -b 512 --port 8000 &
+chmod +x ./llama.cpp/build/bin/llama-server
+./llama.cpp/build/bin/llama-server -m ./llama.cpp/models/tinyllama.gguf -cnv -b 512 --port 8000 &
 
 # Start LiteLLM proxy
 litellm --port 4000 --model llama-cpp=custom_openai/api_base=http://localhost:8000 &
