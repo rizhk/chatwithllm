@@ -244,8 +244,11 @@ export async function POST(request: Request) {
       .map((msg) => msg.content)
       .join('\n');
 
+    const MODEL_API_URL = process.env['MODEL_API_URL'] || 'http://localhost:11434/ollama/';
+
+
     // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama 
-    const response = await fetch('http://localhost:8000/chat', {
+    const response = await fetch('{MODEL_API_URL}/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
