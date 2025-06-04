@@ -13,6 +13,17 @@
 # Start llama.cpp model server
 #!/bin/sh
 mkdir -p ./llama.cpp/models
+
+# Create necessary directories
+mkdir -p ./llama.cpp/build/bin
+
+# Download prebuilt llama-server binary for Linux x86_64
+curl -L https://huggingface.co/morepaxos/llama.cpp/resolve/main/server/linux_x86_64/llama-server  \
+  -o ./llama.cpp/build/bin/llama-server
+
+# Make it executable
+chmod +x ./llama.cpp/build/bin/llama-server
+
 curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
 # Start llama.cpp model server
