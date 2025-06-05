@@ -44,10 +44,10 @@ echo "started llama.cpp server with model at $MODEL_PATH..."
 # Wait for server to start
 SERVER_PID=$!
 
-echo "Waiting for server to start..."
+echo "Waiting for llama server to start..."
 for i in {1..10}; do
     curl -s http://localhost:8000/v1/models > /dev/null && {
-        echo "Server is up!"
+        echo "Llama Server is up!"
         break
     }
     sleep 1
