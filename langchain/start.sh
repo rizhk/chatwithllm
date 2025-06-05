@@ -17,21 +17,26 @@ mkdir -p ./llama.cpp/models
 # Create necessary directories
 mkdir -p ./llama.cpp/build/bin
 
+#!/bin/bash
+
 MODEL_DIR="llama.cpp/models"
 MODEL_URL="https://drive.google.com/uc?id=1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji&export=download"
 MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
-# Create models directory 
 mkdir -p "$MODEL_DIR"
 
-# Download if not already downloaded
 if [ ! -f "$MODEL_PATH" ]; then
     echo "Downloading GGUF model..."
-    wget --quiet --continue --output-document="$MODEL_PATH" "$MODEL_URL"
+    wget --load-cookies /tmp/cookies.txt \
+         "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate $MODEL_URL -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji" \
+         -O "$MODEL_PATH" && rm -rf /tmp/cookies.txt
     echo "Model saved to $MODEL_PATH"
 else
     echo "Model already exists. Skipping download."
 fi
+
+# Run llama.cpp server or Python app 
+python3 -m llama_cpp.server --model "$MODEL_PATH"
 
 # curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 

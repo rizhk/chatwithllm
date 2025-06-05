@@ -8,4 +8,4 @@ openai
 pydantic
 litellm[proxy]
 backoff
-llama-cpp-python[server]
+llama-cpp-python
