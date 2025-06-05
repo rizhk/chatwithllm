@@ -27,8 +27,6 @@ MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 mkdir -p "$MODEL_DIR"
 
 if [ ! -f "$MODEL_PATH" ]; then
-    echo "Installing gdown..."
-    pip install gdown
 
     echo "Downloading GGUF model using gdown..."
     gdown "https://drive.google.com/uc?id=$FILE_ID" -O "$MODEL_PATH"
@@ -38,8 +36,22 @@ else
     echo "Model already exists. Skipping download."
 fi
 
-# Start llama.cpp server 
+# Start llama.cpp server
+echo "Starting llama.cpp server with model at $MODEL_PATH..."
 python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000
+echo "started llama.cpp server with model at $MODEL_PATH..."
+
+# Wait for server to start
+SERVER_PID=$!
+
+echo "Waiting for server to start..."
+for i in {1..10}; do
+    curl -s http://localhost:8000/v1/models > /dev/null && {
+        echo "Server is up!"
+        break
+    }
+    sleep 1
+done
 
 # curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
