@@ -19,23 +19,28 @@ mkdir -p ./llama.cpp/build/bin
 
 #!/bin/bash
 
+#!/bin/bash
+
 MODEL_DIR="llama.cpp/models"
-MODEL_URL="https://drive.google.com/uc?id=1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji&export=download"
+FILE_ID="1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji"
 MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
 mkdir -p "$MODEL_DIR"
 
 if [ ! -f "$MODEL_PATH" ]; then
     echo "Downloading GGUF model..."
+
+    # Download using cookies to bypass GDrive confirmation
     wget --load-cookies /tmp/cookies.txt \
-         "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate $MODEL_URL -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji" \
+         "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://drive.google.com/uc?id=$FILE_ID&export=download" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p')&id=$FILE_ID" \
          -O "$MODEL_PATH" && rm -rf /tmp/cookies.txt
+
     echo "Model saved to $MODEL_PATH"
 else
     echo "Model already exists. Skipping download."
 fi
 
-# Run llama.cpp server or Python app 
+# Start server 
 python3 -m llama_cpp.server --model "$MODEL_PATH"
 
 # curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
