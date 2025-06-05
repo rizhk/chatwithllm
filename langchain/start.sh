@@ -29,7 +29,7 @@ curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/ma
 python -m llama_cpp.server --model ./llama.cpp/models/tinyllama.gguf --host 0.0.0.0 --port 8000
 
 # Start LiteLLM proxy
-litellm --port 4000 --model custom_openai/llama-cpp --api_base http://localhost:8000 &
+# litellm --port 4000 --model custom_openai/llama-cpp --api_base http://localhost:8000 &
 
 # Start FastAPI app
 uvicorn main:app --host 0.0.0.0 --port 10000 --reload
