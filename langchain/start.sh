@@ -39,7 +39,7 @@ else
 fi
 
 # Start llama.cpp server 
-python -m llama_cpp.server --model "$MODEL_PATH" --port 8000
+python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000
 
 # curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
