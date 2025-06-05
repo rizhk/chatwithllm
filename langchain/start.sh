@@ -19,34 +19,32 @@ mkdir -p ./llama.cpp/build/bin
 
 #!/bin/bash
 
-#!/bin/bash
 
 MODEL_DIR="llama.cpp/models"
-FILE_ID="1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji"
+FILE_ID="1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji"  # Your GDrive File ID
 MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
 mkdir -p "$MODEL_DIR"
 
 if [ ! -f "$MODEL_PATH" ]; then
-    echo "Downloading GGUF model..."
+    echo "Installing gdown..."
+    pip install gdown
 
-    # Download using cookies to bypass GDrive confirmation
-    wget --load-cookies /tmp/cookies.txt \
-         "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://drive.google.com/uc?id=$FILE_ID&export=download" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p')&id=$FILE_ID" \
-         -O "$MODEL_PATH" && rm -rf /tmp/cookies.txt
-
+    echo "Downloading GGUF model using gdown..."
+    gdown "https://drive.google.com/uc?id=$FILE_ID" -O "$MODEL_PATH"
+    
     echo "Model saved to $MODEL_PATH"
 else
     echo "Model already exists. Skipping download."
 fi
 
-# Start server 
-python3 -m llama_cpp.server --model "$MODEL_PATH"
+# Start llama.cpp server 
+python -m llama_cpp.server --model "$MODEL_PATH" --port 8000
 
 # curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
 # Start llama.cpp model server
-python -m llama_cpp.server --model ./llama.cpp/models/gpt2.gguf --host 0.0.0.0 --port 8000
+# python -m llama_cpp.server --model ./llama.cpp/models/gpt2.gguf --host 0.0.0.0 --port 8000
 
 # Start LiteLLM proxy
 # litellm --port 4000 --model custom_openai/llama-cpp --api_base http://localhost:8000 &

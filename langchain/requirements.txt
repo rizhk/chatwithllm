@@ -9,3 +9,4 @@ pydantic
 litellm[proxy]
 backoff
 llama-cpp-python
+gdown
