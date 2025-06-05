@@ -21,14 +21,12 @@ mkdir -p ./llama.cpp/build/bin
 # curl -L https://huggingface.co/morepaxos/llama.cpp/resolve/main/server/linux_x86_64/llama-server  \
 #   -o ./llama.cpp/build/bin/llama-server
 
-# Make it executable
-chmod +x ./llama.cpp/build/bin/llama-cli
+
 
 curl -L https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf  -o ./llama.cpp/models/tinyllama.gguf
 
 # Start llama.cpp model server
-chmod +x ./llama.cpp/build/bin/llama-cli
-./llama.cpp/build/bin/llama-cli -m ./llama.cpp/models/tinyllama.gguf -cnv -b 512 --port 8000 &
+python -m llama_cpp.server --model ./llama.cpp/models/tinyllama.gguf --host 0.0.0.0 --port 8000
 
 # Start LiteLLM proxy
 litellm --port 4000 --model custom_openai/llama-cpp --api_base http://localhost:8000 &
