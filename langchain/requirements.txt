@@ -12,3 +12,4 @@ llama-cpp-python
 gdown
 sse-starlette
 starlette-context
+pydantic-settings
