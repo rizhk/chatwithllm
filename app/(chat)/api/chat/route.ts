@@ -163,7 +163,6 @@ export async function POST(request: Request) {
   } catch (_) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
-  console.log(' > POST /chat', requestBody);
 
   try {
     const { id, message, selectedChatModel, selectedVisibilityType } =
@@ -246,9 +245,9 @@ export async function POST(request: Request) {
 
     const MODEL_API_URL = process.env['MODEL_API_URL'];
 
-
+    console.log(`${MODEL_API_URL}/chat`);
     // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama 
-    const response = await fetch('{MODEL_API_URL}/chat', {
+    const response = await fetch(`${MODEL_API_URL}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
