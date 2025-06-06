@@ -7,7 +7,7 @@ MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 # Start FastAPI
 APP_PORT=${PORT:-10000}
 echo "Starting FastAPI on port $APP_PORT..."
-uvicorn main:app --host 0.0.0.0 --port $APP_PORT --reload &
+uvicorn main:app --host 0.0.0.0 --port $APP_PORT --reload
 
 
 # # Start LLM server in background

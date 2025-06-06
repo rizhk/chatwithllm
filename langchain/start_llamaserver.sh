@@ -14,7 +14,7 @@ MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
 # Start LLM server in background
 echo "Starting LLM server..."
-python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000 > ./llm_server.log 2>&1 &
+python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000 > ./llm_server.log 2>&1
 LLM_PID=$!
 echo "Started LLM server with PID $LLM_PID"
 
