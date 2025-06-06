@@ -26,6 +26,16 @@ app = FastAPI()
 @app.get("/")
 async def root():
     return {"message": "Hello World, pakistan zindabad"}
+
+@app.get("/health")
+async def health_check():
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("http://localhost:8000/v1/models")
+            return {"status": "ok", "models": resp.json()}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
   
 @app.get("/random_string")
 async def get_random_string(length: int = 10):
