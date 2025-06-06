@@ -12,6 +12,10 @@ from langchain_api import chat_stream
 import requests
 import sys
 from fastapi.responses import StreamingResponse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 app = FastAPI()
@@ -29,9 +33,10 @@ async def root():
 
 @app.get("/health")
 async def health_check():
+    TEST_MODEL_URL = os.getenv("TEST_MODEL_URL", "http://localhost:8000/v1/models")
     try:
         async with httpx.AsyncClient() as client:
-            resp = await client.get("http://localhost:8000/v1/models")
+            resp = await client.get(TEST_MODEL_URL)
             return {"status": "ok", "models": resp.json()}
     except Exception as e:
         return {"status": "error", "message": str(e)}
