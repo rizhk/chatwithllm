@@ -43,3 +43,8 @@ for i in {1..10}; do
     sleep 1
 done
 
+echo "ps aux | grep llama_cpp.server"
+ps aux | grep llama_cpp.server
+
+echo "netstat -tuln | grep 8000"
+netstat -tuln | grep 8000
