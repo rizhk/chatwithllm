@@ -33,13 +33,22 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    TEST_MODEL_URL = os.getenv("TEST_MODEL_URL", "http://localhost:8000/v1/models")
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(TEST_MODEL_URL)
-            return {"status": "ok", "models": resp.json()}
+        async with httpx.AsyncClient(timeout=100.0) as client:
+            url = "http://localhost:8000/v1/models"
+            print(f"Trying to connect to LLM server at {url}")
+            resp = await client.get(url)
+            
+            print(f"Response status: {resp.status_code}")
+            print(f"Response text: {resp.text[:500]}...")  # First 500 chars
+            
+            try:
+                return {"status": "healthy", "code": resp.status_code, "data": resp.json()}
+            except Exception as je:
+                return {"status": "healthy", "code": resp.status_code, "raw_response": resp.text[:500], "json_error": str(je)}
+                
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {"status": "unhealthy", "error": str(e)}
 
   
 @app.get("/random_string")
