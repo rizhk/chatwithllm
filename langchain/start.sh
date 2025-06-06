@@ -43,8 +43,13 @@ for i in {1..10}; do
     sleep 1
 done
 
-echo "ps aux | grep llama_cpp.server"
+# Wait a bit for server to bind
+sleep 10
+
+# Check if server is running
+echo "Checking for LLM server process..."
 ps aux | grep llama_cpp.server
 
-echo "netstat -tuln | grep 8000"
-netstat -tuln | grep 8000
+# Check if port 8000 is open
+echo "Checking open ports..."
+netstat -tuln | grep 8000 || echo "Port 8000 not found"
