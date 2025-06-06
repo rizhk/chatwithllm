@@ -1,55 +1,39 @@
-
 #!/bin/sh
-mkdir -p ./llama.cpp/models
-
-# Create necessary directories
-mkdir -p ./llama.cpp/build/bin
-
 
 MODEL_DIR="llama.cpp/models"
-FILE_ID="1RPGR7DFcZMl4w5FstmNTI_BLZ0Fcm4Ji"  # Your GDrive File ID
 MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
-mkdir -p "$MODEL_DIR"
+# Install dependencies
+pip install gdown llama-cpp-python uvicorn fastapi httpx
 
-if [ ! -f "$MODEL_PATH" ]; then
+# Download model if needed...
+# ... (same as before)
 
-    echo "Downloading GGUF model using gdown..."
-    gdown "https://drive.google.com/uc?id=$FILE_ID" -O "$MODEL_PATH"
-    
-    echo "Model saved to $MODEL_PATH"
-else
-    echo "Model already exists. Skipping download."
-fi
+# Start LLM server in background
+echo "Starting LLM server..."
+python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000 > ./llm_server.log 2>&1 &
+LLM_PID=$!
+echo "Started LLM server with PID $LLM_PID"
 
-
-# Start FastAPI app
-uvicorn main:app --host 0.0.0.0 --port 10000 --reload
-
-# Start llama.cpp server
-echo "Starting llama.cpp server with model at $MODEL_PATH..."
-python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000
-echo "started llama.cpp server with model at $MODEL_PATH..."
-
-# Wait for server to start
-SERVER_PID=$!
-
-echo "Waiting for llama server to start..."
-for i in {1..10}; do
+# Wait for server to become available
+echo "Waiting for LLM server to respond..."
+for i in {1..30}; do
     curl -s http://localhost:8000/v1/models > /dev/null && {
-        echo "Llama Server is up!"
+        echo "LLM server is up!"
         break
     }
-    sleep 1
+    echo "Retrying LLM server connection ($i/30)..."
+    sleep 2
 done
 
-# Wait a bit for server to bind
-sleep 10
+# Check if server is still running
+if ! kill -0 $LLM_PID 2>/dev/null; then
+    echo "LLM server failed to start. Check ./llm_server.log"
+    cat ./llm_server.log
+    exit 1
+fi
 
-# Check if server is running
-echo "Checking for LLM server process..."
-ps aux | grep llama_cpp.server
-
-# Check if port 8000 is open
-echo "Checking open ports..."
-netstat -tuln | grep 8000 || echo "Port 8000 not found"
+# Start FastAPI
+APP_PORT=${PORT:-10000}
+echo "Starting FastAPI on port $APP_PORT..."
+uvicorn main:app --host 0.0.0.0 --port $APP_PORT --reload
