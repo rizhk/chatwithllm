@@ -14,6 +14,8 @@ import sys
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 import os
+from httpx import AsyncClient
+
 
 load_dotenv()
 
@@ -31,24 +33,40 @@ app = FastAPI()
 async def root():
     return {"message": "Hello World, pakistan zindabad"}
 
+
 @app.get("/health")
 async def health_check():
+    # Get URL from env, default to localhost:8000
+    TEST_MODEL_URL = os.getenv("TEST_MODEL_URL", "http://localhost:8000/v1/models")
+
     try:
-        async with httpx.AsyncClient(timeout=100.0) as client:
-            url = "http://localhost:8000/v1/models"
-            print(f"Trying to connect to LLM server at {url}")
-            resp = await client.get(url)
-            
-            print(f"Response status: {resp.status_code}")
-            print(f"Response text: {resp.text[:500]}...")  # First 500 chars
-            
+        async with AsyncClient(timeout=100.0) as client:
+            print(f"Testing model endpoint: {TEST_MODEL_URL}")
+            resp = await client.get(TEST_MODEL_URL)
+
             try:
-                return {"status": "healthy", "code": resp.status_code, "data": resp.json()}
+                json_data = resp.json()
+                return {
+                    "status": "healthy",
+                    "url": TEST_MODEL_URL,
+                    "status_code": resp.status_code,
+                    "data": json_data
+                }
             except Exception as je:
-                return {"status": "healthy", "code": resp.status_code, "raw_response": resp.text[:500], "json_error": str(je)}
-                
+                return {
+                    "status": "healthy (non-JSON response)",
+                    "url": TEST_MODEL_URL,
+                    "status_code": resp.status_code,
+                    "raw_response": resp.text[:500],  # Show first 500 chars
+                    "json_error": str(je)
+                }
+
     except Exception as e:
-        return {"status": "unhealthy", "error": str(e)}
+        return {
+            "status": "unhealthy",
+            "url": TEST_MODEL_URL,
+            "error": str(e)
+        }
 
   
 @app.get("/random_string")
