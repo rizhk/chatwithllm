@@ -246,7 +246,11 @@ export async function POST(request: Request) {
     const MODEL_API_URL = process.env['MODEL_API_URL'];
 
     console.log(`${MODEL_API_URL}/chat`);
-    // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama 
+    // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000000); // 5 minutes
+
     const response = await fetch(`${MODEL_API_URL}/chat`, {
       method: 'POST',
       headers: {
@@ -256,7 +260,11 @@ export async function POST(request: Request) {
         prompt,
         model: selectedChatModel,
       }),
+      signal: controller.signal, // Connects timeout to fetch
     });
+
+    clearTimeout(timeoutId); // Stop the timeout timer
+
 
     if (!response.ok || !response.body) {
       throw new Error('Failed to fetch stream');
