@@ -33,11 +33,11 @@ from langchain_openai import ChatOpenAI
 
 # Point to your local LiteLLM proxy
 async def chat_stream(message: str):
-    LITELLM_LISTENING_PORT = os.getenv("LITELLM_LISTENING_PORT", "4000")
-    MODEL_NAME = os.getenv("MODEL_NAME", "llama-cpp")
+    MODEL_LISTENING_URL = os.getenv("MODEL_LISTENING_URL")
+    MODEL_NAME = os.getenv("MODEL_NAME", "gpt2")
     
     chat = ChatOpenAI(
-        openai_api_base= f"http://localhost:{LITELLM_LISTENING_PORT}",  # LiteLLM proxy URL
+        openai_api_base= f"{MODEL_LISTENING_URL}",  # LiteLLM proxy URL
         model=MODEL_NAME,
         openai_api_key="EMPTY"
     )
