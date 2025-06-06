@@ -3,8 +3,11 @@
 MODEL_DIR="llama.cpp/models"
 MODEL_PATH="$MODEL_DIR/gpt2.gguf"
 
-# Install dependencies
-pip install gdown llama-cpp-python uvicorn fastapi httpx
+
+# Start FastAPI
+APP_PORT=${PORT:-10000}
+echo "Starting FastAPI on port $APP_PORT..."
+uvicorn main:app --host 0.0.0.0 --port $APP_PORT --reload &
 
 # Download model if needed...
 # ... (same as before)
@@ -33,7 +36,3 @@ if ! kill -0 $LLM_PID 2>/dev/null; then
     exit 1
 fi
 
-# Start FastAPI
-APP_PORT=${PORT:-10000}
-echo "Starting FastAPI on port $APP_PORT..."
-uvicorn main:app --host 0.0.0.0 --port $APP_PORT --reload
