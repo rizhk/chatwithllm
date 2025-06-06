@@ -22,10 +22,14 @@ else
     echo "Model already exists. Skipping download."
 fi
 
+
+# Start FastAPI app
+uvicorn main:app --host 0.0.0.0 --port 10000 --reload
+
 # Start llama.cpp server
-# echo "Starting llama.cpp server with model at $MODEL_PATH..."
-# python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000
-# echo "started llama.cpp server with model at $MODEL_PATH..."
+echo "Starting llama.cpp server with model at $MODEL_PATH..."
+python -m llama_cpp.server --model "$MODEL_PATH" --host 0.0.0.0 --port 8000
+echo "started llama.cpp server with model at $MODEL_PATH..."
 
 # Wait for server to start
 SERVER_PID=$!
@@ -39,5 +43,3 @@ for i in {1..10}; do
     sleep 1
 done
 
-# Start FastAPI app
-uvicorn main:app --host 0.0.0.0 --port 10000 --reload
