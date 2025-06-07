@@ -309,7 +309,8 @@ export async function POST(request: Request) {
             const chunk = decoder.decode(value, { stream: true });
 
             // Split into small parts (optional)
-            const words = chunk.split(/(\s+|\n+)/);
+            // const words = chunk.split(/(\s+|\n+)/);
+            const words = chunk.split(/(?<=[,.!?])|(\s+|\n+)/);
 
             for (let i = 0; i < words.length; i++) {
               const word = words[i];
