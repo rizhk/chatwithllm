@@ -29,20 +29,26 @@ load_dotenv() # Load environment variables from .env file
 
 # print(response.choices[0].message.content)
 
-from langchain_openai import ChatOpenAI
+from langchain_community.llms import HuggingFaceEndpoint
 
 # Point to your local LiteLLM proxy
 async def chat_stream(message: str):
     MODEL_LISTENING_URL = os.getenv("MODEL_LISTENING_URL")
     MODEL_NAME = os.getenv("MODEL_NAME", "gpt2")
+    HF_TOKEN = os.getenv("HF_TOKEN")
     
-    chat = ChatOpenAI(
-        openai_api_base= f"{MODEL_LISTENING_URL}",  # LiteLLM proxy URL
-        model=MODEL_NAME,
-        openai_api_key="EMPTY"
+    repo_id = "Rizhk/gpt2"
+
+    llm = HuggingFaceEndpoint(
+        repo_id=repo_id,
+        huggingfacehub_api_token=HF_TOKEN,
+        task="text-generation",
+        max_new_tokens=100,
+        streaming=True
     )
+    
 
     # Stream response token by token
-    for chunk in chat.stream(message):
+    for chunk in llm.stream(message):
         print(chunk.content)
         yield chunk.content  # Yield only the content string
