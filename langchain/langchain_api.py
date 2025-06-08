@@ -33,14 +33,12 @@ from langchain_community.llms import HuggingFaceEndpoint
 
 # Point to your local LiteLLM proxy
 async def chat_stream(message: str):
-    MODEL_LISTENING_URL = os.getenv("MODEL_LISTENING_URL")
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt2")
     HF_TOKEN = os.getenv("HF_TOKEN")
+    REPO_ID = os.getenv("REPO_ID")
     
-    repo_id = "Rizhk/gpt2"
 
     llm = HuggingFaceEndpoint(
-        repo_id=repo_id,
+        repo_id=REPO_ID,
         huggingfacehub_api_token=HF_TOKEN,
         task="text-generation",
         max_new_tokens=100,
