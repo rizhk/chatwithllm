@@ -13,3 +13,4 @@ gdown
 sse-starlette
 starlette-context
 pydantic-settings
+langchain-community
