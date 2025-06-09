@@ -14,6 +14,7 @@
 import litellm
 from dotenv import load_dotenv
 import os
+from HFCompletionLLM import llm
 
 load_dotenv() # Load environment variables from .env file
 
@@ -33,19 +34,7 @@ from langchain_community.llms import HuggingFaceEndpoint
 
 # Point to your local LiteLLM proxy
 async def chat_stream(message: str):
-    HF_TOKEN = os.getenv("HF_TOKEN")
-    REPO_ID = os.getenv("REPO_ID")
     
-
-    llm = HuggingFaceEndpoint(
-        repo_id=REPO_ID,
-        huggingfacehub_api_token=HF_TOKEN,
-        task="text-generation",
-        max_new_tokens=100,
-        streaming=True
-    )
-    
-
     # Stream response token by token
     for chunk in llm.stream(message):
         print(chunk.content)
