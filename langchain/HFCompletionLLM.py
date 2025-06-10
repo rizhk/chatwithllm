@@ -1,9 +1,9 @@
 from langchain_core.language_models import LLM
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Iterator
 import requests
 from dotenv import load_dotenv
 import os
-
+import json
 # Load environment variables
 load_dotenv()
 
