@@ -76,7 +76,7 @@ class HFCompletionLLM(LLM):
                         yield decoded_line
 
 # Replace with your actual endpoint URL from Hugging Face
-HF_ENDPOINT_URL = os.get("HF_ENDPOINT_URL")
+HF_ENDPOINT_URL = os.getenv("HF_ENDPOINT_URL")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 llm = HFCompletionLLM(
