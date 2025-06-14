@@ -30,12 +30,8 @@ load_dotenv() # Load environment variables from .env file
 
 # print(response.choices[0].message.content)
 
-from langchain_community.llms import HuggingFaceEndpoint
 
 # Point to your local LiteLLM proxy
-async def chat_stream(message: str):
-    
-    # Stream response token by token
-    for chunk in llm.stream(message):
-        print(chunk.content)
-        yield chunk.content  # Yield only the content string
+def chat_stream(message: str):
+    result = llm.invoke(message)
+    return result  # Just returns string — NOT a generator

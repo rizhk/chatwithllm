@@ -245,6 +245,7 @@ export async function POST(request: Request) {
 
     const MODEL_API_URL = process.env['MODEL_API_URL'];
 
+
     console.log(`${MODEL_API_URL}/chat`);
     // 🚀 3. Fetch from your FastAPI endpoint => proxy => ollama
 
@@ -263,12 +264,7 @@ export async function POST(request: Request) {
       signal: controller.signal, // Connects timeout to fetch
     });
 
-    clearTimeout(timeoutId); // Stop the timeout timer
 
-
-    if (!response.ok || !response.body) {
-      throw new Error('Failed to fetch stream');
-    }
     const assistantId = generateUUID();
     await saveMessages({
         messages: [
@@ -283,56 +279,104 @@ export async function POST(request: Request) {
         ],
       });
     
+    if (response.headers.get("content-type")?.includes("application/json")) {
+      const resultJson = await response.json();
 
+      console.log(" application/json JSON Response:", resultJson);
 
-    const stream = new ReadableStream({
-      start(controller) {
-        const encoder = new TextEncoder();
-        const assistantId = generateUUID();
+      // Extract text from JSON
+      const text = resultJson.response || "";
 
-        // f: Start message
-        controller.enqueue(encoder.encode(`f:{"messageId":"${assistantId}"}\n`));
+      // Simulate stream from JSON response
+      const stream = new ReadableStream({
+        start(controller) {
+          const encoder = new TextEncoder();
 
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        function read() {
-          reader.read().then(({ done, value }) => {
-            if (done) {
-              // e: End step
-              controller.enqueue(encoder.encode(`e:{"finishReason":"stop","isContinued":false}\n`));
-              // d: Finish message
-              controller.enqueue(encoder.encode(`d:{"finishReason":"stop","usage":{"promptTokens":1026,"completionTokens":73}}\n`));
-              controller.close();
-              return;
-            }
+          controller.enqueue(encoder.encode(`f:{"messageId":"${assistantId}"}\n`));
 
-            const chunk = decoder.decode(value, { stream: true });
+          // const words = text.split(/(?<=[,.!?])|(\s+|\n+)/);
+          const words = text.match(/\S+|\s+/g) || [];
+          
+          let index = 0;
 
-            // Split into small parts (optional)
-            // const words = chunk.split(/(\s+|\n+)/);
-            const words = chunk.split(/(?<=[,.!?])|(\s+|\n+)/);
-
-            for (let i = 0; i < words.length; i++) {
-              const word = words[i];
-              if (word.trim()) {
-                controller.enqueue(encoder.encode(`0:"${word} "\n`));
+          const interval = setInterval(() => {
+            if (index < words.length) {
+              const word = words[index++];
+              console.log(`Word: ${word}`);
+              if (word && word.trim()) {
+                controller.enqueue(encoder.encode(`0:"${word.trim()}"\n`));
+              } else {
+                controller.enqueue(encoder.encode(`0:" "\n`));
               }
+
+            } else {
+              clearInterval(interval);
+              controller.enqueue(encoder.encode(`e:{"finishReason":"stop","isContinued":false}\n`));
+              controller.enqueue(encoder.encode(`d:{"finishReason":"stop"}\n`));
+              controller.close();
             }
+          }, 30);
+        },
+      });
 
-            read();
-          });
-        }
 
-        read();
-      },
-    });
+      return new Response(stream, {
+        headers: { 'Content-Type': 'text/event-stream' },
+      });
 
-return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-    },
-  });
+    } else if (response.body) {
+      // If it's already a real stream, pass it through
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          const encoder = new TextEncoder();
+          function read() {
+            reader.read().then(({ done, value }) => {
+              if (done) {
+                controller.enqueue(encoder.encode(`e:{"finishReason":"stop"}\n`));
+                controller.enqueue(encoder.encode(`d:{"finishReason":"stop"}\n`));
+                controller.close();
+                return;
+              }
+
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split('\n').filter(Boolean);
+
+              for (const line of lines) {
+                try {
+                  const parsed = JSON.parse(line);
+                  if (parsed && 'token' in parsed) {
+                    const tokenText = parsed.token.text;
+                    controller.enqueue(encoder.encode(`0:"${tokenText}"\n`));
+                  }
+                } catch (e) {
+                  // Ignore invalid lines
+                }
+              }
+
+              read();
+            }).catch((err) => {
+              console.error('Stream error:', err);
+              controller.close();
+            });
+          }
+
+          read();
+        },
+      });
+
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache'
+        },
+      });
+
+    } else {
+      throw new Error("Unsupported response type");
+    }
 
   } catch (error) {
     if (error instanceof ChatSDKError) {

@@ -4,9 +4,9 @@ import requests
 from dotenv import load_dotenv
 import os
 import json
+
 # Load environment variables
 load_dotenv()
-
 
 class HFCompletionLLM(LLM):
     endpoint_url: str
@@ -29,9 +29,17 @@ class HFCompletionLLM(LLM):
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
         }
+        
+    # Simulate chat template manually
+        formatted_prompt = (
+            "<|system|>\nYou are a friendly chatbot. Do not add prompt in your response. Give only answers that user asks, dont return prompts.</s>\n"
+            "<|user|>\n" + prompt.lstrip('\n') + "</s>\n"
+            "<|assistant|>\n"
+        )
+
 
         payload = {
-            "inputs": prompt,
+            "inputs": formatted_prompt,
             "parameters": {
                 "max_new_tokens": self.max_new_tokens,
                 **kwargs
@@ -41,40 +49,45 @@ class HFCompletionLLM(LLM):
         response = requests.post(f"{self.endpoint_url}", headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
+        
+        generated_text = data[0].get("generated_text", "")
+        
+        answer = generated_text[len(formatted_prompt):].strip()
 
+        return answer
         # Handle response format: it's a list with one item
-        return data[0]["generated_text"]
+        # return data[0]["generated_text"]
 
     def _stream(self, prompt: str, stop: Optional[List[str]] = None, **kwargs) -> Iterator[str]:
-        """Stream tokens one-by-one from the model."""
         headers = {
             "Authorization": f"Bearer {self.token}",
             "Content-Type": "application/json"
+        }
+
+    # Only keep JSON-serializable values in payload
+        safe_kwargs = {
+            k: v for k, v in kwargs.items()
+            if isinstance(v, (str, int, float, bool, type(None))) or
+            isinstance(v, (list, dict))  # Recursively check later if needed
         }
 
         payload = {
             "inputs": prompt,
             "parameters": {
                 "max_new_tokens": self.max_new_tokens,
-                "stream": True,  # Enable streaming if supported by server
-                **kwargs
+                "stream": True,
+                **safe_kwargs  # Only pass serializable keys
             }
         }
 
-        with requests.post(f"{self.endpoint_url}/generate", headers=headers, json=payload, stream=True) as response:
+        with requests.post(f"{self.endpoint_url}", headers=headers, json=payload, stream=True) as response:
             response.raise_for_status()
             for line in response.iter_lines():
                 if line:
-                    try:
-                        # Try parsing as JSON (some models return token objects)
-                        decoded_line = line.decode("utf-8")
-                        if '"token"' in decoded_line:
-                            token_data = json.loads(decoded_line)
-                            yield token_data["token"]["text"]
-                    except json.JSONDecodeError:
-                        # If not valid JSON, treat whole line as text
-                        yield decoded_line
-
+                    decoded_line = line.decode("utf-8")
+                    yield decoded_line
+                    
+                             
 # Replace with your actual endpoint URL from Hugging Face
 HF_ENDPOINT_URL = os.getenv("HF_ENDPOINT_URL")
 HF_TOKEN = os.getenv("HF_TOKEN")
