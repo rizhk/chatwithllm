@@ -31,12 +31,7 @@ class HFCompletionLLM(LLM):
         }
         
     # Simulate chat template manually
-        formatted_prompt = (
-            "<|system|>\nYou are a friendly chatbot. Do not add prompt in your response. Give only answers that user asks, dont return prompts.</s>\n"
-            "<|user|>\n" + prompt.lstrip('\n') + "</s>\n"
-            "<|assistant|>\n"
-        )
-
+        formatted_prompt = prompt.lstrip('\n') 
 
         payload = {
             "inputs": formatted_prompt,

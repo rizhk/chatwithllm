@@ -9,6 +9,7 @@ import random
 import string
 import httpx
 from langchain_api import chat_stream
+from save_pdf_to_vector_db import getPgVectorConnection
 import requests
 import sys
 from fastapi.responses import StreamingResponse
@@ -101,11 +102,25 @@ async def get_prompt_response(request: Request):
 async def lang_chat(request: Request):
     data = await request.json()
     prompt = data.get("prompt", "")
-
+    
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required")
     
-    result = chat_stream(prompt)
+    pgVector = getPgVectorConnection()
+
+    context_results = pgVector.similarity_search(prompt, k=3)
+    context = ""
+    for result in context_results:
+        context.join(result.page_content)
+        
+    formatted_prompt = (
+        "<|system|>\nYou are a friendly chatbot.  Give only answers from context.</s>\n"
+        "<|user|>\n" + prompt + "</s>\n"
+        "<|context|>\n" + context + "</s>\n"
+        "<|assistant|>\n"
+    )
+
+    result = chat_stream(formatted_prompt)
 
     return {"response": result}
     # return StreamingResponse(chat_stream(prompt), media_type="text/event-stream")
